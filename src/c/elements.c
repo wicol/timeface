@@ -6,6 +6,8 @@ static TextLayer *s_date_layer;
 static GRect window_bounds;
 // Used as a countdown
 static int show_seconds;
+static BitmapLayer *s_background_layer, *s_bt_icon_layer;
+static GBitmap *s_background_bitmap, *s_bt_icon_bitmap;
 
 void init_layers(Layer *window_layer) {
     window_bounds = layer_get_bounds(window_layer);
@@ -31,6 +33,15 @@ void init_layers(Layer *window_layer) {
     text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
     // Add it as a child layer to the Window's root layer
     layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
+    
+    // Create the Bluetooth icon GBitmap
+    s_bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BT_ICON);
+    // Create the BitmapLayer to display the GBitmap
+    s_bt_icon_layer = bitmap_layer_create(GRect(59, 12, 30, 30));
+    bitmap_layer_set_bitmap(s_bt_icon_layer, s_bt_icon_bitmap);
+    layer_add_child(window_layer, bitmap_layer_get_layer(s_bt_icon_layer));
+    // Show the correct state of the BT connection from the start
+    bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 void destroy_layers() {
@@ -38,6 +49,10 @@ void destroy_layers() {
     text_layer_destroy(s_time_layer);
     // Destroy date
     text_layer_destroy(s_date_layer);
+    
+    // Destroy BT-stuff
+    gbitmap_destroy(s_bt_icon_bitmap);
+    bitmap_layer_destroy(s_bt_icon_layer);
 }
 
 void update_time() {
@@ -101,4 +116,14 @@ void deactivate_seconds() {
 
 void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+}
+
+void bluetooth_callback(bool connected) {
+    // Show icon if disconnected
+    layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), connected);
+    
+    if(!connected) {
+        // Issue a vibrating alert
+        vibes_double_pulse();
+    }
 }

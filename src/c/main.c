@@ -41,6 +41,11 @@ static void init() {
 
   // Register tap handler
   accel_tap_service_subscribe(tap_handler);
+  
+  // Register for Bluetooth connection updates
+  connection_service_subscribe((ConnectionHandlers) {
+      .pebble_app_connection_handler = bluetooth_callback
+  });
 }
 
 static void deinit() {
