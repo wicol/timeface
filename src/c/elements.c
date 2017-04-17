@@ -3,11 +3,12 @@
 // Private vars
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
+static TextLayer *s_weekchar_layer;
 static GRect window_bounds;
 // Used as a countdown
 static int show_seconds;
-static BitmapLayer *s_background_layer, *s_bt_icon_layer;
-static GBitmap *s_background_bitmap, *s_bt_icon_bitmap;
+static BitmapLayer *s_bt_icon_layer;
+static GBitmap *s_bt_icon_bitmap;
 
 void init_layers(Layer *window_layer) {
     window_bounds = layer_get_bounds(window_layer);
@@ -34,6 +35,19 @@ void init_layers(Layer *window_layer) {
     // Add it as a child layer to the Window's root layer
     layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
     
+    // Create the TextLayer for week character with specific bounds
+    s_weekchar_layer = text_layer_create(
+        GRect(45, PBL_IF_ROUND_ELSE(106, 100), 24, 24));
+    // Set week char layer characteristics
+    text_layer_set_background_color(s_weekchar_layer, GColorClear);
+    text_layer_set_text_color(s_weekchar_layer, GColorWhite);
+    text_layer_set_font(s_weekchar_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+    text_layer_set_text_alignment(s_weekchar_layer, GTextAlignmentCenter);
+    // Set text to "W" for Week
+    text_layer_set_text(s_weekchar_layer, "W");
+    // Add it as a child layer to the Window's root layer
+    layer_add_child(window_layer, text_layer_get_layer(s_weekchar_layer));
+    
     // Create the Bluetooth icon GBitmap
     s_bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BT_ICON);
     // Create the BitmapLayer to display the GBitmap
@@ -49,6 +63,8 @@ void destroy_layers() {
     text_layer_destroy(s_time_layer);
     // Destroy date
     text_layer_destroy(s_date_layer);
+    // Destroy week char
+    text_layer_destroy(s_weekchar_layer);
     
     // Destroy BT-stuff
     gbitmap_destroy(s_bt_icon_bitmap);
@@ -62,7 +78,7 @@ void update_time() {
     
     // Write the current time into buffers
     static char s_time_buffer[10];
-    static char s_date_buffer[15];
+    static char s_date_buffer[17];
     
     if (show_seconds > 0) {
         // Put hours, minutes and seconds into the buffer
@@ -83,7 +99,9 @@ void update_time() {
     text_layer_set_text(s_time_layer, s_time_buffer);
     
     // Put the date - and week number - into the date buffer
-    strftime(s_date_buffer, sizeof(s_date_buffer), "%F\n%V", tick_time);
+    // Add some spaces before the week number - thats where
+    // the week char layer will be
+    strftime(s_date_buffer, sizeof(s_date_buffer), "%F\n   %V", tick_time);
     // Display date on the date TextLayer
     text_layer_set_text(s_date_layer, s_date_buffer);
 }
