@@ -4,6 +4,7 @@
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static TextLayer *s_weekchar_layer;
+static TextLayer *s_stats_layer;
 static GRect window_bounds;
 // Used as a countdown
 static int show_seconds;
@@ -48,6 +49,17 @@ void init_layers(Layer *window_layer) {
     // Add it as a child layer to the Window's root layer
     layer_add_child(window_layer, text_layer_get_layer(s_weekchar_layer));
     
+    // Create the TextLayer for stats
+    s_stats_layer = text_layer_create(
+        GRect(0, PBL_IF_ROUND_ELSE(136, 130), window_bounds.size.w, 24));
+    // Set week char layer characteristics
+    text_layer_set_background_color(s_stats_layer, GColorClear);
+    text_layer_set_text_color(s_stats_layer, GColorWhite);
+    text_layer_set_font(s_stats_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(s_stats_layer, GTextAlignmentCenter);
+    // Add it as a child layer to the Window's root layer
+    layer_add_child(window_layer, text_layer_get_layer(s_stats_layer));
+    
     // Create the Bluetooth icon GBitmap
     s_bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BT_ICON);
     // Create the BitmapLayer to display the GBitmap
@@ -65,6 +77,8 @@ void destroy_layers() {
     text_layer_destroy(s_date_layer);
     // Destroy week char
     text_layer_destroy(s_weekchar_layer);
+    // Destroy week char
+    text_layer_destroy(s_stats_layer);
     
     // Destroy BT-stuff
     gbitmap_destroy(s_bt_icon_bitmap);
@@ -104,6 +118,14 @@ void update_time() {
     strftime(s_date_buffer, sizeof(s_date_buffer), "%F\n   %V", tick_time);
     // Display date on the date TextLayer
     text_layer_set_text(s_date_layer, s_date_buffer);
+    
+    //tm->tm_yday
+    //180/365*100
+    static char s_stats_buffer[7];
+    
+    int year_progress = tick_time->tm_yday/3.65f;
+    snprintf(s_stats_buffer, sizeof(s_stats_buffer), "Y: %i%%", year_progress);
+    text_layer_set_text(s_stats_layer, s_stats_buffer);
 }
 
 void activate_seconds() {
